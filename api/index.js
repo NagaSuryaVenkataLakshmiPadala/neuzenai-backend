@@ -2,6 +2,7 @@ import app from '../src/app.js';
 import { connectDB } from '../src/config/db.js';
 
 export default async function handler(req, res) {
+  // CORS Preflight & Headers
   const origin = req.headers.origin || '*';
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', origin);
@@ -15,11 +16,17 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // Normalize Vercel Serverless Request URL for Express Routing
+  const requestUrl = req.url || '/';
+  if (!requestUrl.startsWith('/api')) {
+    req.url = `/api${requestUrl.startsWith('/') ? '' : '/'}${requestUrl}`;
+  }
+
   try {
     await connectDB();
     return app(req, res);
   } catch (error) {
-    console.error('[Vercel Server Initialization Error]', error);
+    console.error('[Vercel Initialization Error]', error);
     return res.status(500).json({
       success: false,
       message: 'Database connection failed.',
