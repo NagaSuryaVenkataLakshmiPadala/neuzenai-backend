@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
+import dns from 'dns';
+
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4']);
+} catch (e) {}
 
 import { User } from '../models/User.js';
 import { Employee } from '../models/Employee.js';
@@ -59,10 +64,10 @@ const seedDB = async () => {
     });
 
 
-    // Passwords (updated credentials)
-    const adminPassHash = await bcrypt.hash('Admin@987', 10);
-    const hrPassHash = await bcrypt.hash('Hr@987', 10);
-    const empPassHash = await bcrypt.hash('Employee@12345', 10);
+    // Passwords (standard credentials)
+    const adminPassHash = await bcrypt.hash('Admin@123', 10);
+    const hrPassHash = await bcrypt.hash('Hr@123', 10);
+    const empPassHash = await bcrypt.hash('Employee@123', 10);
 
     // 2. Create Core Employees with Role-Based CTCs
     const adminEmp = await Employee.create({
