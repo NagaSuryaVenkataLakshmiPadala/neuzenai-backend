@@ -34,34 +34,9 @@ const app = express();
 // Security & Middleware
 app.use(helmet({ contentSecurityPolicy: false }));
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  process.env.CLIENT_URL,
-].filter(Boolean);
+app.use(cors({ origin: true, credentials: true }));
+app.options('*', cors());
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, Postman)
-      if (!origin) return callback(null, true);
-      try {
-        const hostname = new URL(origin).hostname;
-        const isAllowed = allowedOrigins.some(
-          (allowed) => origin === allowed || origin === allowed.replace(/\/$/, '')
-        ) || hostname.endsWith('.vercel.app') || hostname === 'localhost';
-
-        if (isAllowed) {
-          return callback(null, true);
-        }
-      } catch (err) {
-        // Fall through to error
-      }
-      return callback(new Error(`CORS policy: origin ${origin} not allowed`));
-    },
-    credentials: true,
-  })
-);
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -69,24 +44,29 @@ app.use(express.urlencoded({ extended: true }));
 // Uploads Static Serving
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Routes
-app.use('/api/health', healthRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/employees', employeeRoutes);
-app.use('/api/onboarding', onboardingRoutes);
-app.use('/api/offer-letters', offerLetterRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/leaves', leaveRoutes);
-app.use('/api/leave-balances', leaveRoutes);
-app.use('/api/payroll', payrollRoutes);
-app.use('/api/payslips', payrollRoutes);
-app.use('/api/calendar', calendarRoutes);
-app.use('/api/holidays', holidayRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/audit-logs', auditRoutes);
-app.use('/api/settings', settingsRoutes);
+// Routes mounted with /api prefix and fallback prefix
+const mountRoutes = (prefix = '/api') => {
+  app.use(`${prefix}/health`, healthRoutes);
+  app.use(`${prefix}/auth`, authRoutes);
+  app.use(`${prefix}/employees`, employeeRoutes);
+  app.use(`${prefix}/onboarding`, onboardingRoutes);
+  app.use(`${prefix}/offer-letters`, offerLetterRoutes);
+  app.use(`${prefix}/attendance`, attendanceRoutes);
+  app.use(`${prefix}/leaves`, leaveRoutes);
+  app.use(`${prefix}/leave-balances`, leaveRoutes);
+  app.use(`${prefix}/payroll`, payrollRoutes);
+  app.use(`${prefix}/payslips`, payrollRoutes);
+  app.use(`${prefix}/calendar`, calendarRoutes);
+  app.use(`${prefix}/holidays`, holidayRoutes);
+  app.use(`${prefix}/notifications`, notificationRoutes);
+  app.use(`${prefix}/dashboard`, dashboardRoutes);
+  app.use(`${prefix}/reports`, reportRoutes);
+  app.use(`${prefix}/audit-logs`, auditRoutes);
+  app.use(`${prefix}/settings`, settingsRoutes);
+};
+
+mountRoutes('/api');
+mountRoutes('');
 
 // Error Handler
 app.use(errorHandler);
